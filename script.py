@@ -1,32 +1,42 @@
 import os
 import whisper
 
-print("Loading Whisper model into CPU...")
-model = whisper.load_model("base")  # 'base' or 'small' prevents CPU timeout crashes
-
+print("--- Starting Transcript Job ---")
 calls_dir = "./Calls"
 transcripts_dir = "./Transcripts"
 os.makedirs(transcripts_dir, exist_ok=True)
 
-if not os.path.exists(calls_dir) or not os.listdir(calls_dir):
-    print("No audio files found to process.")
+# Safety check for the folder structure
+if not os.path.exists(calls_dir):
+    print("Error: Local 'Calls' directory does not exist.")
     exit(0)
 
-for filename in os.listdir(calls_dir):
-    if filename.endswith((".mp3", ".wav", ".m4a", ".mp4")):
-        file_path = os.path.join(calls_dir, filename)
-        print(f"Transcribing {filename}...")
+# Pull all matching audio files (handling both lowercase and uppercase extensions)
+audio_files = [f for f in os.listdir(calls_dir) if f.lower().endswith((".mp3", ".wav", ".m4a", ".mp4"))]
+print(f"Found {len(audio_files)} audio file(s) inside the local folder to process.")
 
-        # Transcribe audio
-        result = model.transcribe(file_path)
+if len(audio_files) == 0:
+    print("Exiting: No audio files available to process.")
+    exit(0)
 
-        # Save text file
-        txt_filename = os.path.splitext(filename)[0] + ".txt"
-        txt_path = os.path.join(transcripts_dir, txt_filename)
+print("Loading Whisper model into CPU...")
+model = whisper.load_model("base")  
 
-        with open(txt_path, "w", encoding="utf-8") as f:
-            f.write(result["text"])
-            
-        print(f"Success: Created transcript for {filename}")
+for filename in audio_files:
+    file_path = os.path.join(calls_dir, filename)
+    print(f"Processing: {filename}...")
 
-print("Batch processing complete!")
+    # Transcribe the audio file
+    result = model.transcribe(file_path)
+
+    # Correct string handling to create the transcript text file
+    base_name, _ = os.path.splitext(filename)
+    txt_filename = base_name + ".txt"
+    txt_path = os.path.join(transcripts_dir, txt_filename)
+
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write(result["text"])
+        
+    print(f"Success: Created transcript file '{txt_filename}'")
+
+print("--- Job Finished Successfully! ---")
