@@ -2,8 +2,8 @@ name: Scheduled Python Script
 
 on:
   schedule:
-    - cron: '20 10 * * *'  # Runs exactly at 3:50 PM IST
-  workflow_dispatch:      # Allows manual testing button
+    - cron: '20 10 * * *'  # Runs automatically every day at 3:50 PM IST
+  workflow_dispatch:      # Allows you to click the manual "Run workflow" testing button
 
 jobs:
   run-python-code:
@@ -32,11 +32,11 @@ jobs:
       - name: Download Audio Files from Google Drive
         run: |
           mkdir -p Calls
-          rclone copy gdrive:Calls ./Calls --drive-acknowledge-abuse || true
+          rclone copy gdrive:"My Drive/Calls" ./Calls -vv --drive-acknowledge-abuse || true
 
       - name: Execute Script
         run: python script.py
 
       - name: Upload Text Transcripts to Google Drive
         run: |
-          rclone copy ./Transcripts gdrive:Transcripts --drive-acknowledge-abuse || true
+          rclone copy ./Transcripts gdrive:"My Drive/Transcripts" -vv --drive-acknowledge-abuse || true
