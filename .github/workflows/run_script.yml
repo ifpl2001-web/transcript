@@ -2,17 +2,15 @@ name: Scheduled Python Script
 
 on:
   schedule:
-    # This example runs every day at 08:37 AM UTC. 
-    # Change "37 8" to your preferred time using Cron syntax.
-    - cron: '20 10 * * *'
-  workflow_dispatch: # This adds a manual "Run" button so you can test it instantly!
+    - cron: '20 10 * * *'  # Runs exactly at 3:50 PM IST
+  workflow_dispatch:      # Allows manual testing button
 
 jobs:
   run-python-code:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Copy code into the cloud machine
+      - name: Copy repository code
         uses: actions/checkout@v4
 
       - name: Setup Python Environment
@@ -20,10 +18,25 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Libraries
+      - name: Install System Tools & Rclone
         run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg rclone
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install openai-whisper
+
+      - name: Configure Google Drive Access
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONFIG_DATA }}" > ~/.config/rclone/rclone.conf
+
+      - name: Download Audio Files from Google Drive
+        run: |
+          mkdir -p Calls
+          rclone copy gdrive:Calls ./Calls --drive-acknowledge-abuse || true
 
       - name: Execute Script
         run: python script.py
+
+      - name: Upload Text Transcripts to Google Drive
+        run: |
+          rclone copy ./Transcripts gdrive:Transcripts --drive-acknowledge-abuse || true
