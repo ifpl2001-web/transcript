@@ -27,16 +27,18 @@ jobs:
       - name: Configure Google Drive Access
         run: |
           mkdir -p ~/.config/rclone
-          echo "${{ secrets.RCLONE_CONFIG_DATA }}" > ~/.config/rclone/rclone.conf
+          # This sets the header section to [drive] to match your configuration name
+          echo "[drive]" > ~/.config/rclone/rclone.conf
+          echo "${{ secrets.RCLONE_CONFIG_DATA }}" >> ~/.config/rclone/rclone.conf
 
       - name: Download Audio Files from Google Drive
         run: |
           mkdir -p Calls
-          rclone copy gdrive:"My Drive/Calls" ./Calls -vv --drive-acknowledge-abuse || true
+          rclone copy drive:"My Drive/Calls" ./Calls -vv --drive-acknowledge-abuse || true
 
       - name: Execute Script
         run: python script.py
 
       - name: Upload Text Transcripts to Google Drive
         run: |
-          rclone copy ./Transcripts gdrive:"My Drive/Transcripts" -vv --drive-acknowledge-abuse || true
+          rclone copy ./Transcripts drive:"My Drive/Transcripts" -vv --drive-acknowledge-abuse || true
